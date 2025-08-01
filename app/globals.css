@@ -736,7 +736,7 @@ body {
 .collage-container {
   width: 100%;
   background: #F94402;
-  padding: 1rem;
+  padding: 0.9rem;
   border-radius: 0.3rem;
   margin-bottom: 2rem;
   display: flex;
