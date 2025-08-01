@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Logo from '../../../../components/Logo'
 import Confetti from '../../../../components/Confetti'
 
+
 export default function ReadyPage() {
   const router = useRouter()
   const params = useParams()

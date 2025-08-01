@@ -60,6 +60,7 @@ export default function Confetti() {
         this.reset()
       }
 
+      
       reset() {
         // Конфетти появляются по всему экрану
         this.x = Math.random() * canvas.width

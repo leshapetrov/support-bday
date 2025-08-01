@@ -67,6 +67,7 @@ export default function PhotoPage() {
               ctx.filter = filters[filterIdx].css
             }
             
+            
             // Очищаем canvas перед рисованием
             ctx.clearRect(0, 0, canvas.width, canvas.height)
             ctx.drawImage(img, 0, 0)

@@ -26,6 +26,7 @@ export function NotificationProvider({ children }) {
   const showWarning = (message, duration) => showNotification(message, 'warning', duration)
   const showInfo = (message, duration) => showNotification(message, 'info', duration)
 
+
   return (
     <NotificationContext.Provider value={{ showNotification, showSuccess, showError, showWarning, showInfo }}>
       {children}

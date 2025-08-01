@@ -733,12 +733,13 @@ body {
 }
 
 
+
 /* Коллаж контейнер */
 .collage-container {
   width: 100%;
   background: #F94402;
   padding: 0.9rem;
-  border-radius: 0.3rem;
+  border-radius: 0.8rem;
   margin-bottom: 2rem;
   display: flex;
   justify-content: center;

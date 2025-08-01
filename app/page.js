@@ -55,6 +55,7 @@ export default function HomePage() {
             )}
           </button>
         </div>
+      
         
         <div className="home-instructions">
           <p>Для магии понадобится ПК с вебкой,</p>
