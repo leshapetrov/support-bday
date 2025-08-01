@@ -228,7 +228,7 @@ export default function ReadyPage() {
               <img 
                 src={image} 
                 alt="Готовый коллаж" 
-                className="w-full h-full object-cover"
+                className="collage-image"
               />
             </div>
           ) : (
@@ -248,21 +248,23 @@ export default function ReadyPage() {
         </div>
         
         <div className="button-group">
-          <button
-            onClick={addMorePhotos}
-            className="btn-secondary"
-          >
-            переснять свое фото
-          </button>
-          
-          {image && !isCreatingCollage && (
+          <div className="button-group-secondary">
             <button
-              onClick={downloadCollage}
-              className="btn-secondary"
+              onClick={addMorePhotos}
+              className="btn-secondary flex-1"
             >
-              скачать
+              переснять свое фото
             </button>
-          )}
+            
+            {image && !isCreatingCollage && (
+              <button
+                onClick={downloadCollage}
+                className="btn-secondary flex-1"
+              >
+                скачать
+              </button>
+            )}
+          </div>
           
           <button
             onClick={shareCollage}

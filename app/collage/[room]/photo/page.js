@@ -5,10 +5,10 @@ import { useRouter, useParams } from 'next/navigation'
 import Logo from '../../../../components/Logo'
 
 const filters = [
-  { name: "Обычное", css: "" },
-  { name: "Ч/Б", css: "grayscale(1)" },
-  { name: "Инверсия", css: "invert(1)" },
-  { name: "Ярко", css: "contrast(2)" },
+  { name: "обычно", css: "" },
+  { name: "чернобело", css: "grayscale(1)" },
+  { name: "старше", css: "sepia(0.8)" },
+  { name: "ярче", css: "saturate(1.3)" },
 ]
 
 export default function PhotoPage() {
@@ -67,6 +67,8 @@ export default function PhotoPage() {
               ctx.filter = filters[filterIdx].css
             }
             
+            // Очищаем canvas перед рисованием
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
             ctx.drawImage(img, 0, 0)
             
             // Получаем изображение с примененным фильтром
@@ -156,19 +158,19 @@ export default function PhotoPage() {
   return (
     <div className="container-main">
       <div className="container-content">
-        <Logo className="logo fade-in" />
+        <Logo className="logo" />
         <h1 className="title-main">
           Моя фотобудка
         </h1>
         
         <div className="media-container">
           {image && (
-            <img
-              src={image}
-              alt="Снимок"
-              className="w-full h-full object-cover"
-              style={{ filter: filters[filterIdx].css }}
-            />
+                         <img
+               src={image}
+               alt="Снимок"
+               className="photo-image"
+               style={{ filter: filters[filterIdx].css }}
+             />
           )}
         </div>
         

@@ -26,9 +26,9 @@ export default function HomePage() {
   return (
     <div className="home-container">
       <Confetti />
-      <div className="home-content">
+      <div className="home-content fade-in">
         <div className="home-logo">
-          <Logo className="w-60 h-60 md:w-80 md:h-80" />
+          <Logo className="logo-large" />
         </div>
         
         <div className="home-title">
@@ -48,7 +48,7 @@ export default function HomePage() {
             {isGenerating ? (
               <div className="loading">
                 <div className="loading-spinner"></div>
-                Создание комнаты...
+                создаю фотобудку...
               </div>
             ) : (
               'запечатлить момент'

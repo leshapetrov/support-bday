@@ -9,8 +9,8 @@ export const metadata = {
   manifest: "/manifest.json",
   metadataBase: new URL('https://support-birthday.vercel.app'),
   icons: {
-    icon: "/logo-x.svg",
-    apple: "/logo-x.svg",
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
   },
   openGraph: {
     title: "Support Birthday - Запечатлим момент вместе",
@@ -19,7 +19,7 @@ export const metadata = {
     url: "https://support-birthday.vercel.app",
     images: [
       {
-        url: "/logo-x.svg",
+        url: "/favicon.ico",
         width: 120,
         height: 120,
         alt: "Support Birthday",
@@ -30,7 +30,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Support Birthday - Запечатлим момент вместе",
     description: "Создавайте красивые коллажи с друзьями в честь 9-летия Support",
-    images: ["/logo-x.svg"],
+    images: ["/favicon.ico"],
   },
 };
 
@@ -49,7 +49,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Support Birthday" />
-        <link rel="apple-touch-icon" href="/logo-x.svg" />
+        <link rel="apple-touch-icon" href="/favicon.ico" />
       </head>
       <body>
         <NotificationProvider>

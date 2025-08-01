@@ -48,10 +48,10 @@ export default function Notification({ message, type = 'success', duration = 300
 
   return (
     <div 
-      className={`notification ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
+      className={`notification ${isVisible ? 'notification-visible' : 'notification-hidden'}`}
       style={{ transition: 'all 0.3s ease' }}
     >
-      <div className="flex items-center">
+      <div className="notification-content">
         <span 
           className="mr-3 text-lg font-bold"
           style={{ color: getIconColor() }}

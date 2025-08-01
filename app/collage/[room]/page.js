@@ -7,10 +7,10 @@ import { useNotifications } from '../../../components/NotificationProvider'
 import Camera from '../../../components/Camera'
 
 const filters = [
-  { name: "Обычное", css: "" },
-  { name: "Ч/Б", css: "grayscale(1)" },
-  { name: "Инверсия", css: "invert(1)" },
-  { name: "Ярко", css: "contrast(2)" },
+  { name: "обычно", css: "" },
+  { name: "чернобело", css: "grayscale(1)" },
+  { name: "старше", css: "sepia(0.8)" },
+  { name: "ярче", css: "saturate(1.3)" }
 ]
 
 export default function RoomPage() {
@@ -72,6 +72,8 @@ export default function RoomPage() {
               ctx.filter = filters[filterIdx].css
             }
             
+            // Очищаем canvas перед рисованием
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
             ctx.drawImage(img, 0, 0)
             
             // Получаем изображение с примененным фильтром
@@ -163,23 +165,23 @@ export default function RoomPage() {
 
   return (
     <div className="container-main">
-      <div className="container-content">
-        <Logo className="logo fade-in" />
+      <div className="container-content fade-in">
+        <Logo className="logo" />
         <h1 className="title-main">
           Моя фотобудка
         </h1>
         
         <div className="media-container">
           {cameraPermission !== 'denied' ? (
-            <Camera
-              ref={cameraRef}
-              onCapture={handleCapture}
-              onError={handleCameraError}
-              onReady={handleCameraReady}
-              filter={filters[filterIdx].css}
-              className="w-full h-full"
-              showControls={false}
-            />
+                         <Camera
+               ref={cameraRef}
+               onCapture={handleCapture}
+               onError={handleCameraError}
+               onReady={handleCameraReady}
+               filter={filters[filterIdx].css}
+               className="camera-container"
+               showControls={false}
+             />
           ) : (
             <div className="text-gray text-center p-8">
               <p className="text-lg mb-2">Доступ к камере запрещен</p>
@@ -211,10 +213,10 @@ export default function RoomPage() {
               onClick={() => setFilterIdx(idx)}
               className={`btn-filter ${filterIdx === idx ? 'active' : ''}`}
             >
-              {f.name === "Обычное" ? "обычно" : 
-               f.name === "Ч/Б" ? "ч/б" : 
-               f.name === "Инверсия" ? "инверсия" : 
-               f.name === "Ярко" ? "ярко" : f.name}
+              {f.name === "обычно" ? "обычно" : 
+               f.name === "чернобело" ? "чернобело" : 
+               f.name === "старше" ? "старше" : 
+               f.name === "ярче" ? "ярче" : f.name}
             </button>
           ))}
         </div>
@@ -233,6 +235,12 @@ export default function RoomPage() {
             'сделать снимок'
           )}
         </button>
+
+        {webcamReady && (
+          <p className="text-gray mb-4">
+            Камера работает
+          </p>
+        )}
         
         <button
           className="btn-secondary mb-4 mt-4"
@@ -251,11 +259,7 @@ export default function RoomPage() {
           </p>
         )}
         
-        {webcamReady && (
-          <p className="text-gray mt-4">
-            Камера готова! Нажмите кнопку или используйте кнопку на экране
-          </p>
-        )}
+
       </div>
     </div>
   )
