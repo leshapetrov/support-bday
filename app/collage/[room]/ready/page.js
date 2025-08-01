@@ -261,7 +261,7 @@ export default function ReadyPage() {
                 onClick={downloadCollage}
                 className="btn-secondary flex-1"
               >
-                скачать
+                скачать коллаж
               </button>
             )}
           </div>
