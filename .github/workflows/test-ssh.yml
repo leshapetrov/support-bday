@@ -1,0 +1,42 @@
+name: Test SSH Connection
+
+on:
+  workflow_dispatch: # Ручной запуск
+  push:
+    branches: [ main ]
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Test SSH connection
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          echo "🔍 Тестируем SSH соединение..."
+          echo "📅 Время на сервере: $(date)"
+          echo "👤 Пользователь: $(whoami)"
+          echo "📁 Текущая директория: $(pwd)"
+          echo "🐳 Версия Docker: $(docker --version)"
+          echo "🐳 Версия Docker Compose: $(docker-compose --version)"
+          echo "📁 Содержимое /var/www:"
+          ls -la /var/www/
+          
+          if [ -d "/var/www/support-bday" ]; then
+            echo "✅ Директория проекта найдена"
+            cd /var/www/support-bday
+            echo "📁 Директория проекта: $(pwd)"
+            echo "🔍 Статус Git:"
+            git status
+            echo "🔗 Git remotes:"
+            git remote -v
+            echo "📦 Статус Docker контейнеров:"
+            docker-compose ps
+          else
+            echo "❌ Директория проекта не найдена"
+          fi 

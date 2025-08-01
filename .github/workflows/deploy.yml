@@ -8,7 +8,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -22,18 +21,49 @@ jobs:
         port: ${{ secrets.PORT }}
         script: |
           echo "🚀 Начинаем деплой..."
-          cd /var/www/support-bday
+          echo "📅 Время: $(date)"
+          echo "👤 Пользователь: $(whoami)"
           echo "📁 Текущая директория: $(pwd)"
+          
+          # Проверяем существование директории проекта
+          if [ ! -d "/var/www/support-bday" ]; then
+            echo "❌ Директория /var/www/support-bday не найдена!"
+            echo "📁 Содержимое /var/www:"
+            ls -la /var/www/
+            exit 1
+          fi
+          
+          cd /var/www/support-bday
+          echo "📁 Перешли в директорию проекта: $(pwd)"
+          
+          # Проверяем статус Git
+          echo "🔍 Проверяем статус Git..."
+          git status
+          git remote -v
+          
           echo "📥 Получаем последние изменения..."
-          git pull origin main
+          git fetch origin
+          git reset --hard origin/main
+          
           echo "📦 Останавливаем контейнеры..."
-          docker-compose down
+          docker-compose down || echo "⚠️ Контейнеры уже остановлены"
+          
           echo "🔨 Пересобираем образы..."
           docker-compose build --no-cache
+          
           echo "🚀 Запускаем новые контейнеры..."
           docker-compose up -d
+          
+          echo "⏳ Ждем запуска контейнеров..."
+          sleep 10
+          
+          echo "📊 Статус контейнеров:"
+          docker-compose ps
+          
           echo "🧹 Очищаем неиспользуемые образы..."
           docker system prune -f
+          
           echo "✅ Деплой завершен успешно!"
-          echo "📊 Статус контейнеров:"
-          docker-compose ps 
+          echo "🌐 Проверяем доступность сайта..."
+          curl -I http://localhost:80 || echo "⚠️ HTTP недоступен"
+          curl -I https://localhost:443 || echo "⚠️ HTTPS недоступен" 
