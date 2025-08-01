@@ -1,0 +1,23 @@
+name: Test SSH Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-connection:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Test SSH connection
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          echo "✅ SSH подключение успешно!"
+          echo "Текущая директория: $(pwd)"
+          echo "Пользователь: $(whoami)"
+          echo "Дата: $(date)"
+          echo "IP сервера: $(hostname -I)" 

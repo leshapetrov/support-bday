@@ -47,11 +47,11 @@ export default function Confetti() {
       rotation: { min: -0.02, max: 0.04 },
       
       // Интерактивность
-      interactionRadius: 80, // Радиус влияния курсора
-      interactionStrength: 1.5,  // Сила отталкивания
+      interactionRadius: 100, // Радиус влияния курсора
+      interactionStrength: 5,  // Сила отталкивания
       
       // Отскок от краев
-      bounceStrength: 0.7 // Сила отскока (0-1)
+      bounceStrength: 0.8 // Сила отскока (0-1)
     }
 
     // Класс частицы конфетти

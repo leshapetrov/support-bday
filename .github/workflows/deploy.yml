@@ -20,9 +20,19 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         port: ${{ secrets.PORT }}
         script: |
+          echo "🚀 Начинаем деплой..."
           cd /var/www/support-bday
+          echo "📁 Текущая директория: $(pwd)"
+          echo "📥 Получаем последние изменения..."
           git pull origin main
+          echo "📦 Останавливаем контейнеры..."
           docker-compose down
+          echo "🔨 Пересобираем образы..."
           docker-compose build --no-cache
+          echo "🚀 Запускаем новые контейнеры..."
           docker-compose up -d
-          docker system prune -f 
+          echo "🧹 Очищаем неиспользуемые образы..."
+          docker system prune -f
+          echo "✅ Деплой завершен успешно!"
+          echo "📊 Статус контейнеров:"
+          docker-compose ps 

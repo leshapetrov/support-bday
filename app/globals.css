@@ -185,7 +185,7 @@ body {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  background-color: #F94402;
 }
 
 .btn-primary:active {
@@ -205,7 +205,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background: #E5E7EB;
+  background: #F94402;
   transform: translateY(-1px);
 }
 
@@ -485,8 +485,13 @@ body {
   .m-ver {
     flex-direction: column;
   }
+
   .button-group-horizontal {
     gap: 0.7rem !important;
+  }
+
+    .collage-container {
+      padding: 0.4rem !important;
   }
 }
 
@@ -734,12 +739,18 @@ body {
   padding: 1rem;
   border-radius: 0.3rem;
   margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .collage-inner {
   background: #F25C05;
   border-radius: 0.3rem;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Текст */
@@ -961,8 +972,9 @@ body {
 
 .collage-image {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.3rem;
 }
 
 /* Классы для уведомлений */

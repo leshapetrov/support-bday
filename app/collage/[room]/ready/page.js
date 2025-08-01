@@ -24,22 +24,15 @@ export default function ReadyPage() {
     }
 
     if (typeof window !== 'undefined') {
-      // Загружаем существующие фото из коллажа из localStorage (общий для всех пользователей)
-      const existingCollage = localStorage.getItem(`collage_${params.room}`)
-      if (existingCollage) {
-        try {
-          const parsed = JSON.parse(existingCollage)
-          setCollageImages(parsed)
-          
-          // Автоматически создаем коллаж при загрузке страницы
-          if (parsed.length > 0) {
-            createCollageFromImages(parsed)
-          }
-        } catch (e) {
-          console.error('Ошибка парсинга коллажа:', e)
-        }
+      // Получаем все фото пользователей в этой комнате
+      const allUserPhotos = getAllUserPhotos()
+      
+      if (allUserPhotos.length > 0) {
+        setCollageImages(allUserPhotos)
+        // Автоматически создаем коллаж при загрузке страницы
+        createCollageFromImages(allUserPhotos)
       } else {
-        // Если коллажа нет, проверяем есть ли текущее фото в sessionStorage
+        // Если фото нет, проверяем есть ли текущее фото в sessionStorage
         const photo = sessionStorage.getItem('photo')
         if (photo) {
           setCollageImages([photo])
@@ -67,6 +60,30 @@ export default function ReadyPage() {
     return userCount
   }
 
+  // Получаем все фото пользователей в комнате
+  const getAllUserPhotos = () => {
+    if (typeof window === 'undefined') return []
+    
+    const room = params.room
+    const photos = []
+    
+    // Собираем все фото пользователей для этой комнаты
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(`userPhoto_${room}_`)) {
+        const photoData = localStorage.getItem(key)
+        if (photoData) {
+          photos.push(photoData)
+        }
+      }
+    }
+    
+    console.log(`🔍 Найдено ${photos.length} фото в комнате ${room}`)
+    console.log('📸 Ключи фото:', Array.from({length: localStorage.length}, (_, i) => localStorage.key(i)).filter(key => key && key.startsWith(`userPhoto_${room}_`)))
+    
+    return photos
+  }
+
   const createCollageFromImages = async (images) => {
     if (images.length === 0) return
     
@@ -80,8 +97,9 @@ export default function ReadyPage() {
       // Определяем размеры коллажа в зависимости от количества фото
       const { cols, rows } = getCollageDimensions(images.length)
       
-      const cellWidth = 400
-      const cellHeight = 300
+      // Для одного фото используем больший размер
+      const cellWidth = images.length === 1 ? 800 : 400
+      const cellHeight = images.length === 1 ? 600 : 300
       canvas.width = cols * cellWidth
       canvas.height = rows * cellHeight
       
@@ -173,7 +191,10 @@ export default function ReadyPage() {
 
   const getCollageDimensions = (imageCount) => {
     let cols, rows
-    if (imageCount <= 2) {
+    if (imageCount === 1) {
+      cols = 1
+      rows = 1
+    } else if (imageCount <= 2) {
       cols = 2
       rows = 1
     } else if (imageCount <= 4) {
@@ -194,6 +215,22 @@ export default function ReadyPage() {
   const getCollageStyle = () => {
     return {
       width: '100%'
+    }
+  }
+
+  // Получаем стиль для коллажа в зависимости от количества фото
+  const getCollageImageStyle = () => {
+    const photoCount = getUniqueUserCount()
+    if (photoCount === 1) {
+      return {
+        width: '100%',
+        maxWidth: '800px',
+        height: 'auto'
+      }
+    }
+    return {
+      width: '100%',
+      height: 'auto'
     }
   }
 
@@ -229,6 +266,7 @@ export default function ReadyPage() {
                 src={image} 
                 alt="Готовый коллаж" 
                 className="collage-image"
+                style={getCollageImageStyle()}
               />
             </div>
           ) : (

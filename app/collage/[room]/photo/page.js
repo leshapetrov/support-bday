@@ -80,53 +80,30 @@ export default function PhotoPage() {
         })
       }
       
-      // Сохраняем отфильтрованное фото в коллаж
-      applyFilterToImage().then((filteredImage) => {
-        // Генерируем уникальный ID пользователя для этой комнаты
-        const userId = getUserId()
-        const userPhotoKey = `userPhoto_${room}_${userId}`
-        
-        // Получаем существующий коллаж из localStorage (общий для всех пользователей)
-        const existingCollage = localStorage.getItem(`collage_${room}`)
-        let collage = []
-        
-        if (existingCollage) {
-          try {
-            collage = JSON.parse(existingCollage)
-          } catch (e) {
-            console.error('Ошибка парсинга коллажа:', e)
-          }
-        }
-        
-        // Проверяем, есть ли уже фото от этого пользователя
-        const existingUserPhoto = localStorage.getItem(userPhotoKey)
-        
-        if (existingUserPhoto) {
-          // Если пользователь уже добавлял фото, заменяем его в коллаже
-          const photoIndex = collage.indexOf(existingUserPhoto)
-          if (photoIndex !== -1) {
-            collage[photoIndex] = filteredImage
-          }
-        } else {
-          // Если это первое фото пользователя, добавляем в коллаж
-          collage.push(filteredImage)
-        }
-        
-        // Сохраняем новое фото пользователя и обновленный коллаж
-        localStorage.setItem(userPhotoKey, filteredImage)
-        localStorage.setItem(`collage_${room}`, JSON.stringify(collage))
-        
-        router.push(`/collage/${room}/ready`)
-      })
+                      // Сохраняем отфильтрованное фото пользователя
+        applyFilterToImage().then((filteredImage) => {
+          // Генерируем уникальный ID пользователя для этой комнаты
+          const userId = getUserId()
+          const userPhotoKey = `userPhoto_${room}_${userId}`
+          
+          // Сохраняем фото пользователя (заменяем если уже есть)
+          localStorage.setItem(userPhotoKey, filteredImage)
+          
+          console.log(`💾 Сохранено фото для пользователя ${userId} в комнате ${room}`)
+          console.log(`🔑 Ключ: ${userPhotoKey}`)
+          
+          router.push(`/collage/${room}/ready`)
+        })
     }
   }
 
-  // Генерируем уникальный ID пользователя
+  // Генерируем уникальный ID пользователя для конкретной комнаты
   const getUserId = () => {
-    let userId = sessionStorage.getItem('userId')
+    const roomUserIdKey = `userId_${room}`
+    let userId = sessionStorage.getItem(roomUserIdKey)
     if (!userId) {
       userId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-      sessionStorage.setItem('userId', userId)
+      sessionStorage.setItem(roomUserIdKey, userId)
     }
     return userId
   }
@@ -135,16 +112,17 @@ export default function PhotoPage() {
   const getCollagePhotoCount = () => {
     if (typeof window === 'undefined') return 0
     
-    const existingCollage = localStorage.getItem(`collage_${room}`)
-    if (existingCollage) {
-      try {
-        const collage = JSON.parse(existingCollage)
-        return collage.length
-      } catch (e) {
-        return 0
+    let userCount = 0
+    
+    // Проверяем все ключи в localStorage для этой комнаты
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(`userPhoto_${room}_`)) {
+        userCount++
       }
     }
-    return 0
+    
+    return userCount
   }
 
   if (!mounted || !room) {
