@@ -47,6 +47,10 @@ jobs:
           
           echo "📦 Останавливаем контейнеры..."
           docker-compose down || echo "⚠️ Контейнеры уже остановлены"
+
+          echo "📁 Подготавливаем директорию данных..."
+          mkdir -p /var/www/support-bday/data/rooms
+          chown -R 1001:1001 /var/www/support-bday/data || true
           
           echo "🔨 Пересобираем образы..."
           docker-compose build --no-cache

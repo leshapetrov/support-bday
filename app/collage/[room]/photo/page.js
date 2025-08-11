@@ -82,17 +82,17 @@ export default function PhotoPage() {
       }
       
                       // Сохраняем отфильтрованное фото пользователя
-        applyFilterToImage().then((filteredImage) => {
-          // Генерируем уникальный ID пользователя для этой комнаты
+        applyFilterToImage().then(async (filteredImage) => {
           const userId = getUserId()
-          const userPhotoKey = `userPhoto_${room}_${userId}`
-          
-          // Сохраняем фото пользователя (заменяем если уже есть)
-          localStorage.setItem(userPhotoKey, filteredImage)
-          
-          console.log(`💾 Сохранено фото для пользователя ${userId} в комнате ${room}`)
-          console.log(`🔑 Ключ: ${userPhotoKey}`)
-          
+          try {
+            await fetch(`/api/rooms/${room}/photo`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId, imageDataUrl: filteredImage }),
+            })
+          } catch (e) {
+            // игнорируем, страница результата все равно попробует получить фото
+          }
           router.push(`/collage/${room}/ready`)
         })
     }
@@ -111,19 +111,8 @@ export default function PhotoPage() {
 
   // Получаем количество фото в коллаже
   const getCollagePhotoCount = () => {
-    if (typeof window === 'undefined') return 0
-    
-    let userCount = 0
-    
-    // Проверяем все ключи в localStorage для этой комнаты
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && key.startsWith(`userPhoto_${room}_`)) {
-        userCount++
-      }
-    }
-    
-    return userCount
+    // Значение отображается только для UX, получаем с сервера
+    return typeof window === 'undefined' ? 0 : Number(sessionStorage.getItem(`room_${room}_count`) || '0')
   }
 
   if (!mounted || !room) {

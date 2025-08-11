@@ -24,66 +24,49 @@ export default function ReadyPage() {
       return
     }
 
-    if (typeof window !== 'undefined') {
-      // Получаем все фото пользователей в этой комнате
-      const allUserPhotos = getAllUserPhotos()
-      
-      if (allUserPhotos.length > 0) {
-        setCollageImages(allUserPhotos)
-        // Автоматически создаем коллаж при загрузке страницы
-        createCollageFromImages(allUserPhotos)
-      } else {
-        // Если фото нет, проверяем есть ли текущее фото в sessionStorage
-        const photo = sessionStorage.getItem('photo')
-        if (photo) {
-          setCollageImages([photo])
-          createCollageFromImages([photo])
+    let intervalId
+    const fetchAndBuild = async () => {
+      try {
+        const res = await fetch(`/api/rooms/${params.room}/photos`, { cache: 'no-store' })
+        const data = await res.json()
+        const photos = Array.isArray(data?.photos) ? data.photos : []
+        // Сохраняем счетчик для страницы photo
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(`room_${params.room}_count`, String(photos.length))
+        }
+        const images = photos
+          .sort((a, b) => (a.positionIndex ?? 0) - (b.positionIndex ?? 0))
+          .map(p => p.imageDataUrl)
+        setCollageImages(images)
+        if (images.length > 0) {
+          await createCollageFromImages(images)
+        }
+      } catch (e) {
+        // Фоллбек: если сервер пока пуст, используем локальный снимок
+        if (typeof window !== 'undefined') {
+          const photo = sessionStorage.getItem('photo')
+          if (photo) {
+            setCollageImages([photo])
+            await createCollageFromImages([photo])
+          }
         }
       }
+    }
+
+    fetchAndBuild()
+    intervalId = setInterval(fetchAndBuild, 4000)
+
+    return () => {
+      if (intervalId) clearInterval(intervalId)
     }
   }, [params.room, router])
 
-  // Получаем количество уникальных пользователей в комнате
+  // Количество пользователей = количество фото из состояния
   const getUniqueUserCount = () => {
-    if (typeof window === 'undefined') return 0
-    
-    const room = params.room
-    let userCount = 0
-    
-    // Проверяем все ключи в localStorage для этой комнаты
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && key.startsWith(`userPhoto_${room}_`)) {
-        userCount++
-      }
-    }
-    
-    return userCount
+    return Array.isArray(collageImages) ? collageImages.length : 0
   }
 
-  // Получаем все фото пользователей в комнате
-  const getAllUserPhotos = () => {
-    if (typeof window === 'undefined') return []
-    
-    const room = params.room
-    const photos = []
-    
-    // Собираем все фото пользователей для этой комнаты
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && key.startsWith(`userPhoto_${room}_`)) {
-        const photoData = localStorage.getItem(key)
-        if (photoData) {
-          photos.push(photoData)
-        }
-      }
-    }
-    
-    console.log(`🔍 Найдено ${photos.length} фото в комнате ${room}`)
-    console.log('📸 Ключи фото:', Array.from({length: localStorage.length}, (_, i) => localStorage.key(i)).filter(key => key && key.startsWith(`userPhoto_${room}_`)))
-    
-    return photos
-  }
+  // Больше не используем localStorage для сбора фото — данные приходят с сервера
 
   const createCollageFromImages = async (images) => {
     if (images.length === 0) return
