@@ -9,7 +9,8 @@ const Camera = forwardRef(({
   onReady, 
   filter = '', 
   className = '',
-  showControls = true 
+  showControls = true,
+  onPreview // callback для лайв-превью
 }, ref) => {
   const webcamRef = useRef(null)
   const [isReady, setIsReady] = useState(false)
@@ -123,6 +124,10 @@ const Camera = forwardRef(({
         onUserMediaError={handleUserMediaError}
         mirrored={true}
       />
+      {/* Периодически отправляем уменьшенное превью */}
+      {isReady && onPreview && (
+        <PreviewPinger webcamRef={webcamRef} onPreview={onPreview} />
+      )}
       
       {showControls && isReady && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
@@ -161,3 +166,37 @@ const Camera = forwardRef(({
 Camera.displayName = 'Camera'
 
 export default Camera 
+
+function PreviewPinger({ webcamRef, onPreview }) {
+  useEffect(() => {
+    let timer
+    const tick = () => {
+      try {
+        const el = webcamRef.current
+        if (!el) return
+        // Берём маленький скриншот, чтобы снизить нагрузку
+        const original = el.getScreenshot()
+        if (original) {
+          // Дополнительно пережмём
+          const img = new Image()
+          img.onload = () => {
+            const canvas = document.createElement('canvas')
+            const ctx = canvas.getContext('2d')
+            const max = 160
+            const ratio = Math.min(max / img.width, max / img.height)
+            canvas.width = Math.max(1, Math.round(img.width * ratio))
+            canvas.height = Math.max(1, Math.round(img.height * ratio))
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+            const tiny = canvas.toDataURL('image/jpeg', 0.5)
+            onPreview(tiny)
+          }
+          img.src = original
+        }
+      } catch {}
+    }
+
+    timer = setInterval(tick, 3000)
+    return () => clearInterval(timer)
+  }, [webcamRef, onPreview])
+  return null
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Logo from '../../../components/Logo'
 import { useNotifications } from '../../../components/NotificationProvider'
@@ -21,6 +21,7 @@ export default function RoomPage() {
   const [loading, setLoading] = useState(false)
   const [webcamReady, setWebcamReady] = useState(false)
   const [cameraPermission, setCameraPermission] = useState('prompt')
+  const [previews, setPreviews] = useState([])
   const params = useParams()
   const router = useRouter()
   const { showSuccess, showError, showInfo } = useNotifications()
@@ -50,6 +51,46 @@ export default function RoomPage() {
       checkCameraPermission()
     }
   }, [mounted])
+
+  const getUserId = useCallback(() => {
+    if (!room || typeof window === 'undefined') return ''
+    const key = `userId_${room}`
+    let userId = localStorage.getItem(key)
+    if (!userId) {
+      userId = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+      localStorage.setItem(key, userId)
+    }
+    return userId
+  }, [room])
+
+  const sendPreview = useCallback(async (thumbnailDataUrl) => {
+    try {
+      if (!room) return
+      const userId = getUserId()
+      await fetch(`/api/rooms/${room}/previews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, thumbnailDataUrl })
+      })
+    } catch {}
+  }, [room, getUserId])
+
+  useEffect(() => {
+    if (!room) return
+    let timer
+    const tick = async () => {
+      try {
+        const res = await fetch(`/api/rooms/${room}/previews`)
+        if (!res.ok) return
+        const data = await res.json()
+        const list = Array.isArray(data.previews) ? data.previews : []
+        setPreviews(list)
+      } catch {}
+    }
+    tick()
+    timer = setInterval(tick, 4000)
+    return () => clearInterval(timer)
+  }, [room])
 
   const handleCapture = (imageSrc) => {
     if (!room) return
@@ -173,15 +214,16 @@ export default function RoomPage() {
         
         <div className="media-container">
           {cameraPermission !== 'denied' ? (
-                         <Camera
-               ref={cameraRef}
-               onCapture={handleCapture}
-               onError={handleCameraError}
-               onReady={handleCameraReady}
-               filter={filters[filterIdx].css}
-               className="camera-container"
-               showControls={false}
-             />
+            <Camera
+              ref={cameraRef}
+              onCapture={handleCapture}
+              onError={handleCameraError}
+              onReady={handleCameraReady}
+              filter={filters[filterIdx].css}
+              className="camera-container"
+              showControls={false}
+              onPreview={sendPreview}
+            />
           ) : (
             <div className="text-gray text-center p-8">
               <p className="text-lg mb-2">Доступ к камере запрещен</p>
@@ -262,6 +304,20 @@ export default function RoomPage() {
         
 
       </div>
+
+      {previews && previews.length > 0 && (
+        <div className="preview-tray">
+          {previews.map((p) => (
+            <div key={p.userId} className="preview-item" title={p.userId}>
+              {p.thumbnailDataUrl ? (
+                <img src={p.thumbnailDataUrl} alt="preview" />
+              ) : (
+                <div style={{width:'100%',height:'100%',background:'#222'}} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 } 
