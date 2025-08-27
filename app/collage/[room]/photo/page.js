@@ -4,21 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Logo from '../../../../components/Logo'
 
-const filters = [
-  { name: "обычно", css: "" },
-  { name: "чернобело", css: "grayscale(1)" },
-  { name: "старше", css: "sepia(0.8)" },
-  { name: "ярче", css: "saturate(1.3)" },
-]
-
 export default function PhotoPage() {
   const router = useRouter()
   const params = useParams()
   const [room, setRoom] = useState(null)
   const [image, setImage] = useState(null)
-  const [filterIdx, setFilterIdx] = useState(0)
   const [mounted, setMounted] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
   const [photoCount, setPhotoCount] = useState(0)
 
   useEffect(() => {
@@ -32,14 +23,8 @@ export default function PhotoPage() {
 
     if (typeof window !== 'undefined') {
       const photo = sessionStorage.getItem('photo')
-      const filter = sessionStorage.getItem('filter')
-      
       if (photo) {
         setImage(photo)
-      }
-      
-      if (filter) {
-        setFilterIdx(Number(filter) || 0)
       }
     }
   }, [params.room, router])
@@ -80,50 +65,21 @@ export default function PhotoPage() {
   
   const ready = () => {
     if (room) {
-      // Применяем фильтр к изображению перед сохранением
-      const applyFilterToImage = () => {
-        return new Promise((resolve) => {
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          const img = new Image()
-          
-          img.onload = () => {
-            canvas.width = img.width
-            canvas.height = img.height
-            
-            // Применяем фильтр через CSS фильтры
-            if (filters[filterIdx].css) {
-              ctx.filter = filters[filterIdx].css
-            }
-            
-            
-            // Очищаем canvas перед рисованием
-            ctx.clearRect(0, 0, canvas.width, canvas.height)
-            ctx.drawImage(img, 0, 0)
-            
-            // Получаем изображение с примененным фильтром
-            const filteredImage = canvas.toDataURL('image/jpeg', 0.9)
-            resolve(filteredImage)
-          }
-          
-          img.src = image
-        })
+      // Отправляем уже скомпозированное изображение (маска наложена на этапе съемки)
+      const send = async () => {
+        const userId = getUserId()
+        try {
+          await fetch(`/api/rooms/${room}/photo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, imageDataUrl: image }),
+          })
+        } catch (e) {
+          // игнорируем, страница результата все равно попробует получить фото
+        }
+        router.push(`/collage/${room}/ready`)
       }
-      
-                      // Сохраняем отфильтрованное фото пользователя
-        applyFilterToImage().then(async (filteredImage) => {
-          const userId = getUserId()
-          try {
-            await fetch(`/api/rooms/${room}/photo`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId, imageDataUrl: filteredImage }),
-            })
-          } catch (e) {
-            // игнорируем, страница результата все равно попробует получить фото
-          }
-          router.push(`/collage/${room}/ready`)
-        })
+      send()
     }
   }
 
@@ -159,12 +115,11 @@ export default function PhotoPage() {
         
         <div className="media-container">
           {image && (
-                         <img
-               src={image}
-               alt="Снимок"
-               className="photo-image"
-               style={{ filter: filters[filterIdx].css }}
-             />
+            <img
+              src={image}
+              alt="Снимок"
+              className="photo-image"
+            />
           )}
         </div>
         

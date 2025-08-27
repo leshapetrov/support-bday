@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400">
+  <g>
+    <!-- Ушки -->
+    <polygon points="170,70 120,10 220,40" fill="#000"/>
+    <polygon points="330,70 280,40 380,10" fill="#000"/>
+    <polygon points="172,68 130,20 215,45" fill="#ffce00"/>
+    <polygon points="328,68 285,45 370,20" fill="#ffce00"/>
+    <!-- Усики -->
+    <line x1="110" y1="250" x2="200" y2="240" stroke="#000" stroke-width="4"/>
+    <line x1="110" y1="260" x2="200" y2="260" stroke="#000" stroke-width="4"/>
+    <line x1="110" y1="270" x2="200" y2="280" stroke="#000" stroke-width="4"/>
+    <line x1="390" y1="250" x2="300" y2="240" stroke="#000" stroke-width="4"/>
+    <line x1="390" y1="260" x2="300" y2="260" stroke="#000" stroke-width="4"/>
+    <line x1="390" y1="270" x2="300" y2="280" stroke="#000" stroke-width="4"/>
+    <!-- Носик -->
+    <polygon points="240,240 260,240 250,255" fill="#ff9a00"/>
+  </g>
+</svg>
+

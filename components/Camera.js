@@ -10,7 +10,8 @@ const Camera = forwardRef(({
   filter = '', 
   className = '',
   showControls = true,
-  onPreview // callback для лайв-превью
+  onPreview, // callback для лайв-превью
+  overlaySrc // изображение-оверлей поверх предпросмотра (маска)
 }, ref) => {
   const webcamRef = useRef(null)
   const [isReady, setIsReady] = useState(false)
@@ -124,6 +125,14 @@ const Camera = forwardRef(({
         onUserMediaError={handleUserMediaError}
         mirrored={true}
       />
+      {overlaySrc && (
+        <img
+          src={overlaySrc}
+          alt="mask"
+          className="absolute inset-0 w-full h-full"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
       {/* Периодически отправляем уменьшенное превью */}
       {isReady && onPreview && (
         <PreviewPinger webcamRef={webcamRef} onPreview={onPreview} />

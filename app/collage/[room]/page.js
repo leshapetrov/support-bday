@@ -6,18 +6,20 @@ import Logo from '../../../components/Logo'
 import { useNotifications } from '../../../components/NotificationProvider'
 import Camera from '../../../components/Camera'
 
-const filters = [
-  { name: "обычно", css: "" },
-  { name: "чернобело", css: "grayscale(1)" },
-  { name: "старше", css: "sepia(0.8)" },
-  { name: "ярче", css: "saturate(1.3)" }
+// Маски (оверлеи). Обычное — без маски
+const masks = [
+  { key: 'none', label: 'обычное', overlay: '' },
+  { key: 'party', label: 'праздник', overlay: '/masks/hat.svg' },
+  { key: 'friday', label: 'пятница', overlay: '/masks/makeup.svg' },
+  { key: 'clown', label: 'клоун', overlay: '/masks/clown.svg' },
+  { key: 'cat', label: 'кот', overlay: '/masks/cat.svg' },
 ]
 
 export default function RoomPage() {
   const cameraRef = useRef(null)
   const [room, setRoom] = useState(null)
   const [mounted, setMounted] = useState(false)
-  const [filterIdx, setFilterIdx] = useState(0)
+  const [maskIdx, setMaskIdx] = useState(0)
   const [loading, setLoading] = useState(false)
   const [webcamReady, setWebcamReady] = useState(false)
   const [cameraPermission, setCameraPermission] = useState('prompt')
@@ -97,29 +99,39 @@ export default function RoomPage() {
     
     setLoading(true)
     try {
-      // Применяем фильтр к изображению сразу при захвате
+      // Композим маску в изображение сразу при захвате
       const applyFilterToImage = () => {
         return new Promise((resolve) => {
           const canvas = document.createElement('canvas')
           const ctx = canvas.getContext('2d')
           const img = new Image()
+          const maskSrc = masks[maskIdx]?.overlay
+          const maskImg = maskSrc ? new Image() : null
           
           img.onload = () => {
             canvas.width = img.width
             canvas.height = img.height
             
-            // Применяем фильтр через CSS фильтры
-            if (filters[filterIdx].css) {
-              ctx.filter = filters[filterIdx].css
-            }
-            
             // Очищаем canvas перед рисованием
             ctx.clearRect(0, 0, canvas.width, canvas.height)
             ctx.drawImage(img, 0, 0)
             
-            // Получаем изображение с примененным фильтром
-            const filteredImage = canvas.toDataURL('image/jpeg', 0.9)
-            resolve(filteredImage)
+            const finalize = () => {
+              const out = canvas.toDataURL('image/jpeg', 0.9)
+              resolve(out)
+            }
+
+            if (maskImg) {
+              // Размеры: маска занимает всю область кадра (SVG адаптивный)
+              maskImg.onload = () => {
+                ctx.drawImage(maskImg, 0, 0, canvas.width, canvas.height)
+                finalize()
+              }
+              maskImg.crossOrigin = 'anonymous'
+              maskImg.src = maskSrc
+            } else {
+              finalize()
+            }
           }
           
           img.src = imageSrc
@@ -128,7 +140,7 @@ export default function RoomPage() {
       
       applyFilterToImage().then((filteredImage) => {
         sessionStorage.setItem("photo", filteredImage)
-        sessionStorage.setItem("filter", filterIdx.toString())
+        sessionStorage.setItem("mask", maskIdx.toString())
         showSuccess('Снимок создан!')
         router.push(`/collage/${room}/photo`)
         setLoading(false)
@@ -219,10 +231,11 @@ export default function RoomPage() {
               onCapture={handleCapture}
               onError={handleCameraError}
               onReady={handleCameraReady}
-              filter={filters[filterIdx].css}
+              filter={''}
               className="camera-container"
               showControls={false}
               onPreview={sendPreview}
+              overlaySrc={masks[maskIdx]?.overlay || ''}
             />
           ) : (
             <div className="text-gray text-center p-8">
@@ -249,16 +262,13 @@ export default function RoomPage() {
         </div>
         
         <div className="button-group-horizontal mb-8">
-          {filters.map((f, idx) => (
+          {masks.map((m, idx) => (
             <button
               key={idx}
-              onClick={() => setFilterIdx(idx)}
-              className={`btn-filter ${filterIdx === idx ? 'active' : ''}`}
+              onClick={() => setMaskIdx(idx)}
+              className={`btn-filter ${maskIdx === idx ? 'active' : ''}`}
             >
-              {f.name === "обычно" ? "обычно" : 
-               f.name === "чернобело" ? "чернобело" : 
-               f.name === "старше" ? "старше" : 
-               f.name === "ярче" ? "ярче" : f.name}
+              {m.label}
             </button>
           ))}
         </div>

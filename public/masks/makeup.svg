@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400">
+  <g>
+    <!-- Румянец -->
+    <ellipse cx="180" cy="230" rx="42" ry="28" fill="rgba(255,83,128,0.35)"/>
+    <ellipse cx="320" cy="230" rx="42" ry="28" fill="rgba(255,83,128,0.35)"/>
+    <!-- Губы -->
+    <path d="M160 280 Q 250 320 340 280 Q 250 300 160 280 Z" fill="#ff3b6b"/>
+    <!-- Подводка глаз -->
+    <path d="M120 190 Q 180 180 220 200" stroke="#000" stroke-width="6" fill="none"/>
+    <path d="M280 200 Q 320 180 380 190" stroke="#000" stroke-width="6" fill="none"/>
+  </g>
+</svg>
+
