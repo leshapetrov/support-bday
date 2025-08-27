@@ -19,6 +19,7 @@ export default function PhotoPage() {
   const [filterIdx, setFilterIdx] = useState(0)
   const [mounted, setMounted] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [photoCount, setPhotoCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
@@ -42,6 +43,34 @@ export default function PhotoPage() {
       }
     }
   }, [params.room, router])
+
+  // Реальное обновление счётчика фото в коллаже
+  useEffect(() => {
+    if (!room) return
+    let isCancelled = false
+
+    const fetchCount = async () => {
+      try {
+        const res = await fetch(`/api/rooms/${room}/photos`, { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        const count = Array.isArray(data?.photos) ? data.photos.length : 0
+        if (!isCancelled) {
+          setPhotoCount(count)
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(`room_${room}_count`, String(count))
+          }
+        }
+      } catch (e) {
+        // игнорируем ошибки сети
+      }
+    }
+
+    // первичная загрузка и периодический опрос
+    fetchCount()
+    const id = setInterval(fetchCount, 4000)
+    return () => { isCancelled = true; clearInterval(id) }
+  }, [room])
 
   const retake = () => {
     if (room) {
@@ -110,10 +139,7 @@ export default function PhotoPage() {
   }
 
   // Получаем количество фото в коллаже
-  const getCollagePhotoCount = () => {
-    // Значение отображается только для UX, получаем с сервера
-    return typeof window === 'undefined' ? 0 : Number(sessionStorage.getItem(`room_${room}_count`) || '0')
-  }
+  const getCollagePhotoCount = () => photoCount
 
   if (!mounted || !room) {
     return (

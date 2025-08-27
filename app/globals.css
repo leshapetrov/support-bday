@@ -830,6 +830,14 @@ body {
   object-fit: cover;
 }
 
+/* Увеличенные превью на десктопе */
+@media (min-width: 769px) {
+  .preview-item {
+    width: 112px;
+    height: 112px;
+  }
+}
+
 /* Статус */
 .status {
   text-align: center;
