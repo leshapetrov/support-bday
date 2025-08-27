@@ -22,6 +22,8 @@ const Camera = forwardRef(({
   const [devices, setDevices] = useState([])
   const [currentDevice, setCurrentDevice] = useState('')
   const [faceBoxNorm, setFaceBoxNorm] = useState(null)
+  const mpDetectorRef = useRef(null)
+  const mpIntervalRef = useRef(null)
 
   // Создаем стабильную функцию capture
   const capture = useCallback(() => {
@@ -135,6 +137,66 @@ const Camera = forwardRef(({
     }
     rafId = requestAnimationFrame(detect)
     return () => cancelAnimationFrame(rafId)
+  }, [isReady, onFaceUpdate])
+
+  // Fallback: MediaPipe Face Detection при отсутствии native FaceDetector
+  useEffect(() => {
+    if (!isReady) return
+    const hasFD = typeof window !== 'undefined' && 'FaceDetector' in window
+    if (hasFD) return
+    let cancelled = false
+    let busy = false
+
+    const ensureScript = () => new Promise((resolve) => {
+      if (window.FaceDetection) { resolve() ; return }
+      const s = document.createElement('script')
+      s.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js'
+      s.async = true
+      s.onload = () => resolve()
+      document.head.appendChild(s)
+    })
+
+    const start = async () => {
+      try {
+        await ensureScript()
+        if (cancelled) return
+        // eslint-disable-next-line no-undef
+        const fd = new window.FaceDetection({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}` })
+        fd.setOptions({ model: 'short', minDetectionConfidence: 0.5 })
+        fd.onResults((res) => {
+          try {
+            const d = Array.isArray(res?.detections) && res.detections[0]
+            const rbb = d?.locationData?.relativeBoundingBox
+            if (rbb) {
+              const norm = { x: rbb.xMin, y: rbb.yMin, width: rbb.width, height: rbb.height }
+              setFaceBoxNorm(norm)
+              onFaceUpdate?.(norm)
+            }
+          } catch {}
+        })
+        mpDetectorRef.current = fd
+        // 10 FPS
+        mpIntervalRef.current = setInterval(async () => {
+          if (busy || cancelled) return
+          try {
+            const videoEl = webcamRef.current?.video || webcamRef.current?.getVideoElement?.()
+            if (!videoEl || !videoEl.videoWidth) return
+            busy = true
+            await fd.send({ image: videoEl })
+          } catch {} finally { busy = false }
+        }, 100)
+      } catch {}
+    }
+
+    start()
+    return () => {
+      cancelled = true
+      if (mpIntervalRef.current) {
+        clearInterval(mpIntervalRef.current)
+        mpIntervalRef.current = null
+      }
+      mpDetectorRef.current = null
+    }
   }, [isReady, onFaceUpdate])
 
   const computeOverlayRect = () => {
