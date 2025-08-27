@@ -138,7 +138,7 @@ const Camera = forwardRef(({
   }, [isReady, onFaceUpdate])
 
   const computeOverlayRect = () => {
-    if (!overlaySrc || !faceBoxNorm) return null
+    if (!overlaySrc) return null
     const container = containerRef.current
     const videoEl = webcamRef.current?.video || webcamRef.current?.getVideoElement?.()
     if (!container || !videoEl) return null
@@ -152,10 +152,11 @@ const Camera = forwardRef(({
     const displayedH = vh * scale
     const offsetX = (cw - displayedW) / 2
     const offsetY = (ch - displayedH) / 2
-    const fx = faceBoxNorm.x * displayedW + offsetX
-    const fy = faceBoxNorm.y * displayedH + offsetY
-    const fw = faceBoxNorm.width * displayedW
-    const fh = faceBoxNorm.height * displayedH
+    const norm = faceBoxNorm || { x: 0.35, y: 0.26, width: 0.30, height: 0.42 }
+    const fx = norm.x * displayedW + offsetX
+    const fy = norm.y * displayedH + offsetY
+    const fw = norm.width * displayedW
+    const fh = norm.height * displayedH
 
     let w = fw
     let h = fh
