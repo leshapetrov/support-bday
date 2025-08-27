@@ -687,7 +687,7 @@ body {
 .container-content {
   display: flex;
   padding-top: 20px;
-  padding-bottom: 40px;
+  padding-bottom: 100px;
   flex-direction: column;
   align-items: center;
   max-width: 40rem;
@@ -803,14 +803,14 @@ body {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 12px;
   display: flex;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   justify-content: center;
   align-items: flex-end;
   pointer-events: none; /* не блокируем клики по основному UI */
-  z-index: 40;
+  z-index: 99999;
 }
 
 .preview-item {

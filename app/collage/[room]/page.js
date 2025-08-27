@@ -305,19 +305,24 @@ export default function RoomPage() {
 
       </div>
 
-      {previews && previews.length > 0 && (
-        <div className="preview-tray">
-          {previews.map((p) => (
-            <div key={p.userId} className="preview-item" title={p.userId}>
-              {p.thumbnailDataUrl ? (
-                <img src={p.thumbnailDataUrl} alt="preview" />
-              ) : (
-                <div style={{width:'100%',height:'100%',background:'#222'}} />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      {(() => {
+        const uid = getUserId()
+        const others = Array.isArray(previews) ? previews.filter(p => p.userId !== uid) : []
+        if (others.length === 0) return null
+        return (
+          <div className="preview-tray">
+            {others.map((p) => (
+              <div key={p.userId} className="preview-item" title={p.userId}>
+                {p.thumbnailDataUrl ? (
+                  <img src={p.thumbnailDataUrl} alt="preview" />
+                ) : (
+                  <div style={{width:'100%',height:'100%',background:'#222'}} />
+                )}
+              </div>
+            ))}
+          </div>
+        )
+      })()}
     </div>
   )
 } 
