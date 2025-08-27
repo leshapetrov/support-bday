@@ -11,13 +11,17 @@ const Camera = forwardRef(({
   className = '',
   showControls = true,
   onPreview, // callback для лайв-превью
-  overlaySrc // изображение-оверлей поверх предпросмотра (маска)
+  overlaySrc, // изображение-оверлей поверх предпросмотра (маска)
+  overlayKey, // тип маски: none | party | friday | clown | cat
+  onFaceUpdate // (boxNorm) => void, нормализованные координаты лица
 }, ref) => {
   const webcamRef = useRef(null)
+  const containerRef = useRef(null)
   const [isReady, setIsReady] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [devices, setDevices] = useState([])
   const [currentDevice, setCurrentDevice] = useState('')
+  const [faceBoxNorm, setFaceBoxNorm] = useState(null)
 
   // Создаем стабильную функцию capture
   const capture = useCallback(() => {
@@ -95,6 +99,106 @@ const Camera = forwardRef(({
     return constraints
   }
 
+  // Детекция лица (FaceDetector при наличии)
+  useEffect(() => {
+    if (!isReady) return
+    let rafId
+    let detector
+    const hasFD = typeof window !== 'undefined' && 'FaceDetector' in window
+    if (!hasFD) return
+    try {
+      // eslint-disable-next-line no-undef
+      detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 })
+    } catch {
+      detector = null
+    }
+    if (!detector) return
+
+    const detect = async () => {
+      try {
+        const videoEl = webcamRef.current?.video || webcamRef.current?.getVideoElement?.()
+        if (!videoEl || !videoEl.videoWidth || !videoEl.videoHeight) {
+          rafId = requestAnimationFrame(detect)
+          return
+        }
+        const faces = await detector.detect(videoEl)
+        if (faces && faces.length > 0) {
+          const box = faces[0].boundingBox || faces[0].boundingClientRect || faces[0]
+          const vw = videoEl.videoWidth
+          const vh = videoEl.videoHeight
+          const norm = { x: box.x / vw, y: box.y / vh, width: box.width / vw, height: box.height / vh }
+          setFaceBoxNorm(norm)
+          onFaceUpdate?.(norm)
+        }
+      } catch {}
+      rafId = requestAnimationFrame(detect)
+    }
+    rafId = requestAnimationFrame(detect)
+    return () => cancelAnimationFrame(rafId)
+  }, [isReady, onFaceUpdate])
+
+  const computeOverlayRect = () => {
+    if (!overlaySrc || !faceBoxNorm) return null
+    const container = containerRef.current
+    const videoEl = webcamRef.current?.video || webcamRef.current?.getVideoElement?.()
+    if (!container || !videoEl) return null
+    const cw = container.clientWidth
+    const ch = container.clientHeight
+    const vw = videoEl.videoWidth
+    const vh = videoEl.videoHeight
+    if (!vw || !vh || !cw || !ch) return null
+    const scale = Math.max(cw / vw, ch / vh)
+    const displayedW = vw * scale
+    const displayedH = vh * scale
+    const offsetX = (cw - displayedW) / 2
+    const offsetY = (ch - displayedH) / 2
+    const fx = faceBoxNorm.x * displayedW + offsetX
+    const fy = faceBoxNorm.y * displayedH + offsetY
+    const fw = faceBoxNorm.width * displayedW
+    const fh = faceBoxNorm.height * displayedH
+
+    let w = fw
+    let h = fh
+    let left = fx
+    let top = fy
+
+    switch (overlayKey) {
+      case 'party': // колпак
+        w = fw * 1.6
+        h = w // пропорции приблизительные, svg масштабируется
+        top = fy - fh * 0.9
+        left = fx + fw / 2 - w / 2
+        break
+      case 'friday': // макияж
+        w = fw * 1.05
+        h = fh * 1.05
+        top = fy - fh * 0.05
+        left = fx - fw * 0.025
+        break
+      case 'clown':
+        w = fw * 1.1
+        h = fh * 1.1
+        top = fy - fh * 0.05
+        left = fx - fw * 0.05
+        break
+      case 'cat':
+        w = fw * 1.25
+        h = fh * 1.25
+        top = fy - fh * 0.4
+        left = fx - fw * 0.125
+        break
+      default:
+        return null
+    }
+
+    // Видео зеркалится по X, компенсируем позицию маски зеркалированием по left
+    const mirroredLeft = cw - (left + w)
+
+    return { left: mirroredLeft, top, width: w, height: h }
+  }
+
+  const overlayRect = computeOverlayRect()
+
   if (hasError) {
     return (
       <div className={`flex items-center justify-center bg-gray-800 text-white ${className}`}>
@@ -113,7 +217,7 @@ const Camera = forwardRef(({
   }
 
   return (
-    <div className={`relative ${className}`} data-camera-component>
+    <div ref={containerRef} className={`relative ${className}`} data-camera-component>
       <Webcam
         audio={false}
         ref={webcamRef}
@@ -125,12 +229,18 @@ const Camera = forwardRef(({
         onUserMediaError={handleUserMediaError}
         mirrored={true}
       />
-      {overlaySrc && (
+      {overlaySrc && overlayRect && (
         <img
           src={overlaySrc}
           alt="mask"
-          className="absolute inset-0 w-full h-full"
-          style={{ pointerEvents: 'none' }}
+          className="absolute"
+          style={{
+            pointerEvents: 'none',
+            left: `${Math.round(overlayRect.left)}px`,
+            top: `${Math.round(overlayRect.top)}px`,
+            width: `${Math.round(overlayRect.width)}px`,
+            height: `${Math.round(overlayRect.height)}px`
+          }}
         />
       )}
       {/* Периодически отправляем уменьшенное превью */}

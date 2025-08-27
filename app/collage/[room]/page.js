@@ -24,6 +24,7 @@ export default function RoomPage() {
   const [webcamReady, setWebcamReady] = useState(false)
   const [cameraPermission, setCameraPermission] = useState('prompt')
   const [previews, setPreviews] = useState([])
+  const [faceBoxNorm, setFaceBoxNorm] = useState(null) // {x,y,width,height} в нормализованных координатах видео
   const params = useParams()
   const router = useRouter()
   const { showSuccess, showError, showInfo } = useNotifications()
@@ -99,7 +100,7 @@ export default function RoomPage() {
     
     setLoading(true)
     try {
-      // Композим маску в изображение сразу при захвате
+      // Композим маску в изображение сразу при захвате (с учетом координат лица)
       const applyFilterToImage = () => {
         return new Promise((resolve) => {
           const canvas = document.createElement('canvas')
@@ -121,8 +122,60 @@ export default function RoomPage() {
               resolve(out)
             }
 
-            if (maskImg) {
-              // Размеры: маска занимает всю область кадра (SVG адаптивный)
+            if (maskImg && faceBoxNorm) {
+              // Вычисляем рамку маски по нормализованным координатам лица (в пикселях изображения)
+              const fx = faceBoxNorm.x * canvas.width
+              const fy = faceBoxNorm.y * canvas.height
+              const fw = faceBoxNorm.width * canvas.width
+              const fh = faceBoxNorm.height * canvas.height
+
+              let w = fw
+              let h = fh
+              let left = fx
+              let top = fy
+
+              switch (masks[maskIdx]?.key) {
+                case 'party':
+                  w = fw * 1.6
+                  h = w
+                  top = fy - fh * 0.9
+                  left = fx + fw / 2 - w / 2
+                  break
+                case 'friday':
+                  w = fw * 1.05
+                  h = fh * 1.05
+                  top = fy - fh * 0.05
+                  left = fx - fw * 0.025
+                  break
+                case 'clown':
+                  w = fw * 1.1
+                  h = fh * 1.1
+                  top = fy - fh * 0.05
+                  left = fx - fw * 0.05
+                  break
+                case 'cat':
+                  w = fw * 1.25
+                  h = fh * 1.25
+                  top = fy - fh * 0.4
+                  left = fx - fw * 0.125
+                  break
+                default:
+                  break
+              }
+
+              // Скриншот зеркален по X, зеркалим левую координату
+              if (masks[maskIdx]?.key && masks[maskIdx]?.key !== 'none') {
+                left = canvas.width - (left + w)
+              }
+
+              maskImg.onload = () => {
+                ctx.drawImage(maskImg, left, top, w, h)
+                finalize()
+              }
+              maskImg.crossOrigin = 'anonymous'
+              maskImg.src = maskSrc
+            } else if (maskImg && !faceBoxNorm) {
+              // Фоллбек: если нет детекции лица — растягиваем на весь кадр
               maskImg.onload = () => {
                 ctx.drawImage(maskImg, 0, 0, canvas.width, canvas.height)
                 finalize()
@@ -236,6 +289,8 @@ export default function RoomPage() {
               showControls={false}
               onPreview={sendPreview}
               overlaySrc={masks[maskIdx]?.overlay || ''}
+              overlayKey={masks[maskIdx]?.key}
+              onFaceUpdate={setFaceBoxNorm}
             />
           ) : (
             <div className="text-gray text-center p-8">
